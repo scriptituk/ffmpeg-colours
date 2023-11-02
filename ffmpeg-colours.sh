@@ -49,8 +49,8 @@ function rgb2hsv(r, g, b, _h, _s, _v, _m, _d) {
     return _h "," _s "," _v
 }
 {
-    c = $2 # colour
-    gsub(/[",]/, "", c)
+    name = $2 # colour
+    gsub(/[",]/, "", name)
 
     rgb = $4 $5 $6
     gsub(/, *0x/, "", rgb)
@@ -62,18 +62,15 @@ function rgb2hsv(r, g, b, _h, _s, _v, _m, _d) {
     hsv = rgb2hsv(r, g, b)
     split(hsv, a, ",")
 
-    print c, rgb, r, g, b, a[1], a[2], a[3]
+    print name, rgb, r, g, b, a[1], a[2], a[3]
 }
 ' $TMP/color_table.txt |
-while read c rgb r g b h s v; do
-    echo $c $rgb $r $g $b $h $s $v
-done |
 sort $sort |
-while read c rgb r g b h s v; do
+while read name rgb; do
     i=$((i+1))
-    o=$(printf '%03d-%s' $i $c)
+    o=$(printf '%03d-%s' $i $name)
     if [[ ! -f $TMP/$order/$o.png ]]; then
-        convert -size $size xc:$rgb -font Arial-Bold -pointsize 12 -fill white -undercolor '#0008' -gravity center -annotate 0 "$nbsp$c$nbsp\n$nbsp$rgb$nbsp" PNG8:$TMP/$order/$o.png
+        convert -size $size xc:$rgb -font Arial-Bold -pointsize 12 -fill white -undercolor '#0008' -gravity center -annotate 0 "$nbsp$name$nbsp\n$nbsp$rgb$nbsp" PNG8:$TMP/$order/$o.png
     fi
 done
 
