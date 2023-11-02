@@ -3,17 +3,21 @@
 # FFmpeg Utilities named colours montage by Raymond Luckhurst, Scriptit UK, https://scriptit.uk
 # GitHub: owner scriptituk; repository ffmpeg-colours https://github.com/scriptituk/ffmpeg-colours
 # See https://ffmpeg.org/ffmpeg-utils.html#Color
-
-TMP=tmp-fc
-mkdir -p $TMP/c
+# Usage ffmpeg-colours.sh [hsv]
 
 nbsp=$'\xC2\xA0'
 size=118x73 # Phi
 
+order=name
+sort=-k1f
+[[ $1 == hsv ]] && order=hsv && sort='-k6n -k7n -k8n'
+
+TMP=tmp-fc
+mkdir -p $TMP/$order
+
 if [[ ! -f $TMP/parseutils.c ]]; then
     wget -q -P $TMP https://raw.githubusercontent.com/FFmpeg/FFmpeg/master/libavutil/parseutils.c
 fi
-
 gsed -n -e '/color_table\[\]/,/^\};/{//!p}' $TMP/parseutils.c > $TMP/color_table.txt
 
 gawk --non-decimal-data '
@@ -64,17 +68,17 @@ function rgb2hsv(r, g, b, _h, _s, _v, _m, _d) {
 while read c rgb r g b h s v; do
     echo $c $rgb $r $g $b $h $s $v
 done |
-sort -k6n -k7n -k8n |
+sort $sort |
 while read c rgb r g b h s v; do
     i=$((i+1))
     o=$(printf '%03d-%s' $i $c)
-    if [[ ! -f $TMP/c/$o.png ]]; then
-        convert -size $size xc:$rgb -font Arial-Bold -pointsize 12 -fill white -undercolor '#0008' -gravity center -annotate 0 "$nbsp$c$nbsp\n$nbsp$rgb$nbsp" PNG8:$TMP/c/$o.png
+    if [[ ! -f $TMP/$order/$o.png ]]; then
+        convert -size $size xc:$rgb -font Arial-Bold -pointsize 12 -fill white -undercolor '#0008' -gravity center -annotate 0 "$nbsp$c$nbsp\n$nbsp$rgb$nbsp" PNG8:$TMP/$order/$o.png
     fi
 done
 
-montage $TMP/c/* -tile 5x -geometry +1+1 ffmpeg-colours.png
+montage $TMP/$order/* -tile 5x -geometry +1+1 ffmpeg-colours-$order.png
 
-which -s optipng && optipng -quiet -clobber -o7 -out ffmpeg-colours.png ffmpeg-colours.png
+which -s optipng && optipng -quiet -clobber -o7 -out ffmpeg-colours-$order.png ffmpeg-colours-$order.png
 
 rm -fr $TMP
